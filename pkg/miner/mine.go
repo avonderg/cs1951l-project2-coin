@@ -2,6 +2,7 @@ package miner
 
 import (
 	"Coin/pkg/block"
+	"bytes"
 	"context"
 	"fmt"
 	"math"
@@ -19,8 +20,28 @@ func (m *Miner) Mine() *block.Block {
 // know whether it should quit before it finds a nonce (if another block
 // was found). ASICSs are optimized for this task.
 func (m *Miner) CalculateNonce(ctx context.Context, b *block.Block) bool {
-	//TODO
-	return false
+	nonce := b.Header.Nonce
+	target := m.DifficultyTarget
+
+	for nonce < m.Config.NonceLimit {
+		// check if another found
+		select {
+		case <-ctx.Done():
+			return false // quit if another block was found
+		//
+		default:
+			nonce = nonce - uint32(10000) // decrase the nonce by what factor?
+			b.Header.Nonce = nonce
+
+			hash := []byte(b.Hash()) // convert hash to byte array
+
+			// does it meet the difficulty target?
+			if bytes.Compare(hash, target) < 0 {
+				break // nonce is less than the difficulty target, exit the loop
+			}
+		}
+	}
+	return true
 }
 
 // GenerateCoinbaseTransaction generates a coinbase
@@ -29,6 +50,20 @@ func (m *Miner) CalculateNonce(ctx context.Context, b *block.Block) bool {
 // and sending that sum to itself.
 func (m *Miner) GenerateCoinbaseTransaction(txs []*block.Transaction) *block.Transaction {
 	//TODO
+
+	inpSum, _ := m.getInputSums(txs)
+	var outSum []uint32
+	var fee uint32
+
+	for i, tx := range txs {
+		outSum[i] = tx.SumOutputs()
+	}
+	for i, sum := range inpSum {
+		fee += sum - outSum[i] // aggregate
+	}
+
+	reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
+
 	return nil
 }
 
