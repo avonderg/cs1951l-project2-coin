@@ -13,6 +13,21 @@ import (
 // with the highest priority to add to the mining pool.
 func (m *Miner) Mine() *block.Block {
 	//TODO
+	if m.TxPool.PriorityMet() { // just return if false instead
+		m.Mining.Store(true)             // set mining to true
+		m.MiningPool = m.NewMiningPool() // create new pool
+
+		// create new coinbase tx
+		cbTx := m.GenerateCoinbaseTransaction(m.MiningPool)
+		// make list of all transactions in mining pool in addition to cbTx
+		// pass in cbTx into append
+		txs := []*block.Transaction{cbTx}
+		// need to add the other transactions in the miner pool
+
+		block := block.New(m.PreviousHash, txs, m.DifficultyTarget)
+
+		// calculate nonce and check if it is true or not
+	}
 	return nil
 }
 
@@ -20,7 +35,7 @@ func (m *Miner) Mine() *block.Block {
 // know whether it should quit before it finds a nonce (if another block
 // was found). ASICSs are optimized for this task.
 func (m *Miner) CalculateNonce(ctx context.Context, b *block.Block) bool {
-	nonce := b.Header.Nonce
+	nonce := uint32(0)
 	target := m.DifficultyTarget
 
 	for nonce < m.Config.NonceLimit {
@@ -30,14 +45,14 @@ func (m *Miner) CalculateNonce(ctx context.Context, b *block.Block) bool {
 			return false // quit if another block was found
 		//
 		default:
-			nonce = nonce - uint32(10000) // decrase the nonce by what factor?
+			nonce += 1 // decrease the nonce by what factor?
 			b.Header.Nonce = nonce
 
 			hash := []byte(b.Hash()) // convert hash to byte array
 
 			// does it meet the difficulty target?
 			if bytes.Compare(hash, target) < 0 {
-				break // nonce is less than the difficulty target, exit the loop
+				return true // nonce is less than the difficulty target, exit the loop
 			}
 		}
 	}
@@ -61,10 +76,14 @@ func (m *Miner) GenerateCoinbaseTransaction(txs []*block.Transaction) *block.Tra
 	for i, sum := range inpSum {
 		fee += sum - outSum[i] // aggregate
 	}
-
 	reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
-
-	return nil
+	new_tx := &block.Transaction{
+		Version:  1,
+		Inputs:   []*block.TransactionInput{{}},
+		Outputs:  []*block.TransactionOutput{{Amount: reward, LockingScript: m.Id.GetPublicKeyString()}},
+		LockTime: 0,
+	}
+	return new_tx
 }
 
 // getInputSums returns the sums of the inputs of a slice of transactions,
