@@ -13,20 +13,32 @@ import (
 // with the highest priority to add to the mining pool.
 func (m *Miner) Mine() *block.Block {
 	//TODO
-	if m.TxPool.PriorityMet() { // just return if false instead
-		m.Mining.Store(true)             // set mining to true
-		m.MiningPool = m.NewMiningPool() // create new pool
+	if m.TxPool.PriorityMet() == false { // return if not worth mining a block
+		return nil
+	}
+	m.Mining.Store(true)             // set mining to true
+	m.MiningPool = m.NewMiningPool() // create new pool
 
-		// create new coinbase tx
-		cbTx := m.GenerateCoinbaseTransaction(m.MiningPool)
-		// make list of all transactions in mining pool in addition to cbTx
-		// pass in cbTx into append
-		txs := []*block.Transaction{cbTx}
-		// need to add the other transactions in the miner pool
-
-		block := block.New(m.PreviousHash, txs, m.DifficultyTarget)
-
-		// calculate nonce and check if it is true or not
+	// create new coinbase tx
+	cbTx := m.GenerateCoinbaseTransaction(m.MiningPool)
+	// make list of all transactions in mining pool in addition to cbTx
+	// pass in cbTx into append
+	txs := []*block.Transaction{cbTx}
+	// need to add the other transactions in the miner pool
+	for _, tx := range m.MiningPool {
+		txs = append(txs, tx)
+	}
+	// create new block
+	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel() // helps context exit
+	// calculate nonce and check if it is true or not
+	nonceFound := m.CalculateNonce(ctx, b)
+	m.Mining.Store(false) // update mining field
+	if nonceFound {
+		m.SendBlock <- b // send block to miner channel
+		m.HandleBlock(b)
+		return b
 	}
 	return nil
 }
