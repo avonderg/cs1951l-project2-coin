@@ -81,8 +81,22 @@ func New(config *Config, id id.ID) *Wallet {
 func (w *Wallet) generateTransactionInputs(amount uint32, fee uint32) (uint32, []*block.TransactionInput, []*CoinInfo) {
 	//TODO: optional, but we recommend using a helper like this
 	var inputs []*block.TransactionInput
+	var coins []*CoinInfo
+	// change : (how much you spent) - (amount + fee)
+	sum := uint32(0)
 
-	return 0, nil, nil
+	for out, coin := range w.CoinCollection {
+		sum += coin.TransactionOutput.Amount
+		signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
+		inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
+		inputs = append(inputs, inp)
+		// enough to satisfy amount + fee? it exceeds by a little and what you exceed it by is what you are returning
+		coins = append(coins, coin)
+		delete(w.CoinCollection, out) // do you remove it from the coin collection??????
+	}
+	change := sum - (amount + fee)
+
+	return change, inputs, coins
 }
 
 // generateTransactionOutputs generates the transaction outputs required to create a transaction.
@@ -93,9 +107,10 @@ func (w *Wallet) generateTransactionOutputs(
 ) []*block.TransactionOutput {
 	//TODO: optional, but we recommend using a helper like this
 	var outputs []*block.TransactionOutput
-	output := &block.TransactionOutput{amount, string(receiverPK)}
-	outputs = append(outputs, output)
-	w.Balance += change
+	output_receiver := &block.TransactionOutput{amount, string(receiverPK)}
+	outputs = append(outputs, output_receiver)
+	output_change := &block.TransactionOutput{change, string(w.Id.GetPublicKeyBytes())}
+	outputs = append(outputs, output_change)
 	return outputs
 }
 
@@ -103,7 +118,22 @@ func (w *Wallet) generateTransactionOutputs(
 // which will propagate the transaction along the P2P network.
 func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byte) *block.Transaction {
 	//TODO
-	return nil
+	if !(w.Balance >= amount+fee) {
+		return nil
+	}
+	//pk := w.Id.GetPublicKeyString()
+	change, inputs, coins := w.generateTransactionInputs(amount, fee)
+	outputs := w.generateTransactionOutputs(amount, recipientPK, change)
+
+	w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
+	transac := &block.Transaction{Version: 1, Inputs: inputs, Outputs: outputs, LockTime: 2} // unsure ab locktime and version
+
+	//c := make(chan *block.Transaction)
+	//c <- transac // send transac to c
+	w.TransactionRequests <- transac // set it to c
+
+	w.Balance -= change
+	return transac
 }
 
 // HandleBlock handles the transactions of a new block. It:
@@ -116,6 +146,8 @@ func (w *Wallet) HandleBlock(txs []*block.Transaction) {
 	for _, tx := range txs {
 		w.checkInputs(tx.Inputs)
 		w.checkOutputs(tx.Outputs, tx.Inputs)
+		w.updateCoin()
+		// third helper that increments by 1 and chceks if it exceeds the limit and delete
 	}
 }
 
@@ -126,10 +158,10 @@ func (w *Wallet) checkInputs(inps []*block.TransactionInput) {
 		hash := input.ReferenceTransactionHash
 		if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
 			coinInfo := w.UnseenSpentCoins[hash]
-			count := 0
+
 			for _, coin := range coinInfo {
-				w.UnconfirmedSpentCoins[coin] = uint32(count + 1) // is count correct
-				delete(w.UnseenSpentCoins, hash)                  // delete from map
+				w.UnconfirmedSpentCoins[coin] = 1
+				delete(w.UnseenSpentCoins, hash) // delete from map
 			}
 		}
 	}
