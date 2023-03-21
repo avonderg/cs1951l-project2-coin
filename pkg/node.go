@@ -103,6 +103,16 @@ func New(conf *Config) *Node {
 // to other peers in the network.
 func (n *Node) BroadcastTransaction(tx *block.Transaction) {
 	//TODO
+	n.SeenTransactions[tx.Hash()] = true // is hash the key
+
+	//sums := uint32(0)
+	//sums <- n.Miner.InputSums    // figure out how to get inpupt sums
+	//n.Miner.TxPool.Add(tx, sums) // update tx pool
+	n.Miner.HandleTransaction(tx)
+
+	for _, peer := range n.PeerDb.List() {
+		peer.Addr.ForwardTransactionRPC(block.EncodeTransaction(tx))
+	}
 }
 
 // Start starts a node on the network. At first, the node is
@@ -163,6 +173,15 @@ func (n *Node) Start() {
 // broadcast.
 func (n *Node) HandleMinerBlock(b *block.Block) {
 	//TODO
+	n.SeenBlocks[b.Hash()] = true
+
+	n.BlockChain.HandleBlock(b) // update the blockchain
+
+	n.Wallet.HandleBlock(b.Transactions) // wallet update its mappings
+
+	for _, peer := range n.PeerDb.List() {
+		peer.Addr.ForwardBlockRPC(block.EncodeBlock(b))
+	}
 }
 
 // GetBalance returns the balance (amount of money)

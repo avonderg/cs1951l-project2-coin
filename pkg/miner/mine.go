@@ -82,15 +82,18 @@ func (m *Miner) GenerateCoinbaseTransaction(txs []*block.Transaction) *block.Tra
 	var outSum []uint32
 	var fee uint32
 
-	for i, tx := range txs {
-		outSum[i] = tx.SumOutputs()
+	for _, tx := range txs {
+		//outSum[i] = tx.SumOutputs()
+		outSum = append(outSum, tx.SumOutputs())
 	}
 	for i, sum := range inpSum {
 		fee += sum - outSum[i] // aggregate
 	}
+
+	// take care of case where they are equal
 	reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
 	new_tx := &block.Transaction{
-		Version:  1,
+		Version:  0,
 		Inputs:   []*block.TransactionInput{{}},
 		Outputs:  []*block.TransactionOutput{{Amount: reward, LockingScript: m.Id.GetPublicKeyString()}},
 		LockTime: 0,

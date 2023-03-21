@@ -130,9 +130,8 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 
 	//c := make(chan *block.Transaction)
 	//c <- transac // send transac to c
-	w.TransactionRequests <- transac // set it to c
 
-	w.Balance -= change
+	w.Balance = change + fee
 	return transac
 }
 
