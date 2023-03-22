@@ -36,6 +36,7 @@ func (m *Miner) Mine() *block.Block {
 	nonceFound := m.CalculateNonce(ctx, b)
 	m.Mining.Store(false) // update mining field
 	if nonceFound {
+		m.PreviousHash = b.Hash()
 		m.SendBlock <- b // send block to miner channel
 		m.HandleBlock(b)
 		return b
