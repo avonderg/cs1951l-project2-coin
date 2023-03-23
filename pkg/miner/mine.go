@@ -2,7 +2,6 @@ package miner
 
 import (
 	"Coin/pkg/block"
-	"Coin/pkg/utils"
 	"bytes"
 	"context"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 // with the highest priority to add to the mining pool.
 func (m *Miner) Mine() *block.Block {
 	//TODO
-	utils.SetDebug(true)
 	if !m.TxPool.PriorityMet() { // return if not worth mining a block
 		return nil
 	}
@@ -23,11 +21,8 @@ func (m *Miner) Mine() *block.Block {
 	pool := m.NewMiningPool() // create new pool
 	// create new coinbase tx
 	//cbTx := m.GenerateCoinbaseTransaction(pool)
-	// make list of all transactions in mining pool in addition to cbTx
-	// pass in cbTx into append
 	//txs := []*block.Transaction{cbTx}
 	//txs := append([]*block.Transaction{m.GenerateCoinbaseTransaction(pool)}, pool...)
-	// need to add the other transactions in the miner pool
 	//for _, tx := range m.MiningPool {
 	//	txs = append(txs, tx)
 	//}
@@ -40,7 +35,6 @@ func (m *Miner) Mine() *block.Block {
 	nonceFound := m.CalculateNonce(ctx, b)
 	m.Mining.Store(false) // update mining field
 	if nonceFound {
-		utils.Debug.Println("nonce found [mine]")
 		m.SendBlock <- b // send block to miner channel
 		//m.HandleBlock(b)
 		m.TxPool.CheckTransactions(b.Transactions)
@@ -100,7 +94,7 @@ func (m *Miner) GenerateCoinbaseTransaction(txs []*block.Transaction) *block.Tra
 	reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
 	new_tx := &block.Transaction{
 		Version:  0,
-		Inputs:   []*block.TransactionInput{{}},
+		Inputs:   make([]*block.TransactionInput, 0),
 		Outputs:  []*block.TransactionOutput{{Amount: reward, LockingScript: m.Id.GetPublicKeyString()}},
 		LockTime: 0,
 	}
