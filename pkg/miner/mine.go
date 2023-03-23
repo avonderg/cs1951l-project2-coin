@@ -30,7 +30,7 @@ func (m *Miner) Mine() *block.Block {
 	for _, tx := range m.MiningPool {
 		txs = append(txs, tx)
 	}
-
+	utils.Debug.Println(string(len(txs)))
 	// create new block
 	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
 	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
