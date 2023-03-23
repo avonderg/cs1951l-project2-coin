@@ -144,7 +144,7 @@ func (w *Wallet) HandleBlock(txs []*block.Transaction) {
 	//TODO
 	for _, tx := range txs {
 		w.checkInputs(tx.Inputs)
-		w.checkOutputs(tx.Outputs, tx.Inputs)
+		w.checkOutputs(tx.Outputs, tx)
 		w.updateCoin()
 		// third helper that increments by 1 and chceks if it exceeds the limit and delete
 	}
@@ -158,23 +158,23 @@ func (w *Wallet) checkInputs(inps []*block.TransactionInput) {
 		if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
 			coinInfo := w.UnseenSpentCoins[hash]
 
+			delete(w.UnseenSpentCoins, hash)
 			for _, coin := range coinInfo {
 				w.UnconfirmedSpentCoins[coin] = 1
-				delete(w.UnseenSpentCoins, hash) // delete from map
 			}
 		}
 	}
 }
 
 // step (2): sees if any of the incoming outputs on the block are ours
-func (w *Wallet) checkOutputs(outs []*block.TransactionOutput, inps []*block.TransactionInput) {
+func (w *Wallet) checkOutputs(outs []*block.TransactionOutput, tx *block.Transaction) {
 	for i, out := range outs {
 		// create coin
 		if out.LockingScript == w.Id.GetPublicKeyString() {
-			coin := &CoinInfo{inps[i].ReferenceTransactionHash, uint32(i), out}
+			coin := &CoinInfo{tx.Hash(), uint32(i), out}
 
 			// check if coin is ours
-			w.UnconfirmedReceivedCoins[coin] = 0 // no clue what to assign it to
+			w.UnconfirmedReceivedCoins[coin] = 1
 		}
 	}
 }
@@ -186,21 +186,20 @@ func (w *Wallet) updateCoin() {
 	// then delete the unconfirmed coins from that field
 	// otherwise if they haven't reached it then increment the # of confirmations
 
-	for _, coin := range w.CoinCollection {
-		if _, ok := w.UnconfirmedSpentCoins[coin]; ok { // if its unconfirmed spent
-			if (w.UnconfirmedSpentCoins[coin]) >= w.Config.SafeBlockAmount { // safe block amount????
-				delete(w.UnconfirmedSpentCoins, coin)
-			} else {
-				w.UnconfirmedSpentCoins[coin] += 1
-			}
+	for coin, _ := range w.UnconfirmedSpentCoins {
+		if (w.UnconfirmedSpentCoins[coin]) >= w.Config.SafeBlockAmount { // safe block amount????
+			delete(w.UnconfirmedSpentCoins, coin)
+		} else {
+			w.UnconfirmedSpentCoins[coin] += 1
 		}
-		if _, ok := w.UnconfirmedReceivedCoins[coin]; ok { // if its unconfirmed received
-			if (w.UnconfirmedReceivedCoins[coin]) >= w.Config.SafeBlockAmount {
-				w.Balance += w.UnconfirmedReceivedCoins[coin] // add it to balance
-				delete(w.UnconfirmedReceivedCoins, coin)
-			} else {
-				w.UnconfirmedReceivedCoins[coin] += 1
-			}
+	}
+	for coin, _ := range w.UnconfirmedReceivedCoins {
+		if (w.UnconfirmedReceivedCoins[coin]) >= w.Config.SafeBlockAmount {
+			w.Balance += w.UnconfirmedReceivedCoins[coin] // add it to balance
+			w.CoinCollection[coin.TransactionOutput] = coin
+			delete(w.UnconfirmedReceivedCoins, coin)
+		} else {
+			w.UnconfirmedReceivedCoins[coin] += 1
 		}
 	}
 }
