@@ -172,7 +172,7 @@ func CreateMockedGenesisWallet() *wallet.Wallet {
 	return w
 }
 
-//FillWalletWithCoins will fill a wallet with n coins of amount amt
+// FillWalletWithCoins will fill a wallet with n coins of amount amt
 func FillWalletWithCoins(w *wallet.Wallet, n uint32, amt uint32) {
 	b := MockedBlockWithNCoins(w, n, amt)
 	w.HandleBlock(b.Transactions)
@@ -212,7 +212,6 @@ func TestMine1(t *testing.T) {
 	//chain := blockchain.New(blockchain.DefaultConfig())
 	StartCluster(nodes)
 	user := nodes[1]
-	t.Errorf("hello\n")
 	FillWalletWithCoins(user.Wallet, 10, 250)
 	if user.Wallet.Balance != 250*10 {
 		t.Errorf("user has wrong number of coins in its wallet")
