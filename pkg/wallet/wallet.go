@@ -126,7 +126,7 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 	outputs := w.generateTransactionOutputs(amount, recipientPK, change)
 
 	w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
-	transac := &block.Transaction{Version: 1, Inputs: inputs, Outputs: outputs, LockTime: 2} // unsure ab locktime and version
+	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
 
 	//c := make(chan *block.Transaction)
 	//c <- transac // send transac to c

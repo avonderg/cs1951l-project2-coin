@@ -2,6 +2,7 @@ package miner
 
 import (
 	"Coin/pkg/block"
+	"Coin/pkg/utils"
 	"bytes"
 	"context"
 	"fmt"
@@ -39,6 +40,7 @@ func (m *Miner) Mine() *block.Block {
 	nonceFound := m.CalculateNonce(ctx, b)
 	m.Mining.Store(false) // update mining field
 	if nonceFound {
+		utils.Debug.Println("nonce found [mine]")
 		m.SendBlock <- b // send block to miner channel
 		m.HandleBlock(b)
 		return b
@@ -82,19 +84,19 @@ func (m *Miner) GenerateCoinbaseTransaction(txs []*block.Transaction) *block.Tra
 	//TODO
 
 	inpSum, _ := m.getInputSums(txs)
-	var outSum []uint32
-	var fee uint32
-
-	for _, tx := range txs {
+	//var outSum []uint32
+	//var fee uint32
+	reward := m.CalculateMintingReward()
+	for i, tx := range txs {
 		//outSum[i] = tx.SumOutputs()
-		outSum = append(outSum, tx.SumOutputs())
+		reward += (inpSum[i] - tx.SumOutputs())
+		//outSum = append(outSum, tx.SumOutputs())
 	}
-	for i, sum := range inpSum {
-		fee += sum - outSum[i] // aggregate
-	}
-
+	//for i, sum := range inpSum {
+	//	fee += sum - outSum[i] // aggregate
+	//}
 	// take care of case where they are equal
-	reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
+	//reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
 	new_tx := &block.Transaction{
 		Version:  0,
 		Inputs:   []*block.TransactionInput{{}},
