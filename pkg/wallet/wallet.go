@@ -143,25 +143,36 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 func (w *Wallet) HandleBlock(txs []*block.Transaction) {
 	//TODO
 	for _, tx := range txs {
-		w.checkInputs(tx.Inputs)
+		w.checkInputs(tx)
 		w.checkOutputs(tx.Outputs, tx)
 		w.updateCoin()
 		// third helper that increments by 1 and chceks if it exceeds the limit and delete
 	}
 }
 
-// step (1): sees if any of the inputs are ones that we've spent
-func (w *Wallet) checkInputs(inps []*block.TransactionInput) {
-	//TODO
-	for _, input := range inps {
-		hash := input.ReferenceTransactionHash
-		if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
-			coinInfo := w.UnseenSpentCoins[hash]
+// look at other fuctions dealing with putting txs into a block (# txs in a block incorrect)!! otherwise its good
 
-			delete(w.UnseenSpentCoins, hash)
-			for _, coin := range coinInfo {
-				w.UnconfirmedSpentCoins[coin] = 1
-			}
+// step (1): sees if any of the inputs are ones that we've spent
+func (w *Wallet) checkInputs(tx *block.Transaction) {
+	//TODO
+	//for _, input := range inps {
+	//	hash := input.ReferenceTransactionHash
+	//	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
+	//		coinInfo := w.UnseenSpentCoins[hash]
+	//
+	//		delete(w.UnseenSpentCoins, hash)
+	//		for _, coin := range coinInfo {
+	//			w.UnconfirmedSpentCoins[coin] = 1
+	//		}
+	//	}
+	//}
+	hash := tx.Hash()
+	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
+		coinInfo := w.UnseenSpentCoins[hash]
+
+		delete(w.UnseenSpentCoins, hash)
+		for _, coin := range coinInfo {
+			w.UnconfirmedSpentCoins[coin] = 1
 		}
 	}
 }
