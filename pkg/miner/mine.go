@@ -16,11 +16,11 @@ func (m *Miner) Mine() *block.Block {
 	if m.TxPool.PriorityMet() == false { // return if not worth mining a block
 		return nil
 	}
-	m.Mining.Store(true)             // set mining to true
-	m.MiningPool = m.NewMiningPool() // create new pool
-
+	m.Mining.Store(true) // set mining to true
+	//m.MiningPool = m.NewMiningPool() // create new pool
+	pool := m.NewMiningPool() // create new pool
 	// create new coinbase tx
-	cbTx := m.GenerateCoinbaseTransaction(m.MiningPool)
+	cbTx := m.GenerateCoinbaseTransaction(pool)
 	// make list of all transactions in mining pool in addition to cbTx
 	// pass in cbTx into append
 	txs := []*block.Transaction{cbTx}
@@ -28,6 +28,7 @@ func (m *Miner) Mine() *block.Block {
 	for _, tx := range m.MiningPool {
 		txs = append(txs, tx)
 	}
+
 	// create new block
 	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -38,7 +39,6 @@ func (m *Miner) Mine() *block.Block {
 	if nonceFound {
 		m.SendBlock <- b // send block to miner channel
 		m.HandleBlock(b)
-		m.PreviousHash = b.Hash()
 		return b
 	}
 	return nil
