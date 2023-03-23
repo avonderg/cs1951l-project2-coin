@@ -26,14 +26,13 @@ func (m *Miner) Mine() *block.Block {
 	// make list of all transactions in mining pool in addition to cbTx
 	// pass in cbTx into append
 	//txs := []*block.Transaction{cbTx}
-	txs := append([]*block.Transaction{m.GenerateCoinbaseTransaction(pool)}, pool...)
+	//txs := append([]*block.Transaction{m.GenerateCoinbaseTransaction(pool)}, pool...)
 	// need to add the other transactions in the miner pool
 	//for _, tx := range m.MiningPool {
 	//	txs = append(txs, tx)
 	//}
-	utils.Debug.Println(" length of txs", string(len(txs)))
 	// create new block
-	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
+	b := block.New(m.PreviousHash, pool, string(m.DifficultyTarget))
 	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // helps context exit
@@ -43,7 +42,9 @@ func (m *Miner) Mine() *block.Block {
 	if nonceFound {
 		utils.Debug.Println("nonce found [mine]")
 		m.SendBlock <- b // send block to miner channel
-		m.HandleBlock(b)
+		//m.HandleBlock(b)
+		m.TxPool.CheckTransactions(b.Transactions)
+		b.Transactions = append([]*block.Transaction{m.GenerateCoinbaseTransaction(pool)}, pool...)
 		return b
 	}
 	return nil
