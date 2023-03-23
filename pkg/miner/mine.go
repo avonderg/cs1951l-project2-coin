@@ -24,12 +24,12 @@ func (m *Miner) Mine() *block.Block {
 	cbTx := m.GenerateCoinbaseTransaction(pool)
 	// make list of all transactions in mining pool in addition to cbTx
 	// pass in cbTx into append
-	txs := []*block.Transaction{cbTx}
-	//txs := append([]*block.Transaction{cbTx}, pool...)
+	//txs := []*block.Transaction{cbTx}
+	txs := append([]*block.Transaction{cbTx}, pool...)
 	// need to add the other transactions in the miner pool
-	for _, tx := range m.MiningPool {
-		txs = append(txs, tx)
-	}
+	//for _, tx := range m.MiningPool {
+	//	txs = append(txs, tx)
+	//}
 	utils.Debug.Println(string(len(txs)))
 	// create new block
 	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
