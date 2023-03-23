@@ -24,12 +24,12 @@ func (m *Miner) Mine() *block.Block {
 	cbTx := m.GenerateCoinbaseTransaction(pool)
 	// make list of all transactions in mining pool in addition to cbTx
 	// pass in cbTx into append
-	//txs := []*block.Transaction{cbTx}
-	txs := append([]*block.Transaction{cbTx}, pool...)
+	txs := []*block.Transaction{cbTx}
+	//txs := append([]*block.Transaction{cbTx}, pool...)
 	// need to add the other transactions in the miner pool
-	//for _, tx := range m.MiningPool {
-	//	txs = append(txs, tx)
-	//}
+	for _, tx := range m.MiningPool {
+		txs = append(txs, tx)
+	}
 
 	// create new block
 	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
@@ -84,19 +84,18 @@ func (m *Miner) GenerateCoinbaseTransaction(txs []*block.Transaction) *block.Tra
 	//TODO
 
 	inpSum, _ := m.getInputSums(txs)
-	//var outSum []uint32
-	//var fee uint32
-	reward := m.CalculateMintingReward()
-	for i, tx := range txs {
-		//outSum[i] = tx.SumOutputs()
-		reward += (inpSum[i] - tx.SumOutputs())
-		//outSum = append(outSum, tx.SumOutputs())
+	var outSum []uint32
+	var fee uint32
+	//reward := m.CalculateMintingReward()
+	for _, tx := range txs {
+		//reward += (inpSum[i] - tx.SumOutputs())
+		outSum = append(outSum, tx.SumOutputs())
 	}
-	//for i, sum := range inpSum {
-	//	fee += sum - outSum[i] // aggregate
-	//}
+	for i, sum := range inpSum {
+		fee += sum - outSum[i] // aggregate
+	}
 	// take care of case where they are equal
-	//reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
+	reward := m.CalculateMintingReward() + fee // add fee reward to minting reward
 	new_tx := &block.Transaction{
 		Version:  0,
 		Inputs:   []*block.TransactionInput{{}},
