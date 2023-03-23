@@ -13,7 +13,7 @@ import (
 // with the highest priority to add to the mining pool.
 func (m *Miner) Mine() *block.Block {
 	//TODO
-	if m.TxPool.PriorityMet() == false { // return if not worth mining a block
+	if !m.TxPool.PriorityMet() { // return if not worth mining a block
 		return nil
 	}
 	m.Mining.Store(true) // set mining to true
@@ -32,7 +32,8 @@ func (m *Miner) Mine() *block.Block {
 
 	// create new block
 	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // helps context exit
 	// calculate nonce and check if it is true or not
 	nonceFound := m.CalculateNonce(ctx, b)
