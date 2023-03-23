@@ -103,12 +103,13 @@ func New(conf *Config) *Node {
 // to other peers in the network.
 func (n *Node) BroadcastTransaction(tx *block.Transaction) {
 	//TODO
+	n.Miner.HandleTransaction(tx)
+
 	n.SeenTransactions[tx.Hash()] = true // is hash the key
 
 	//sums := uint32(0)
 	//sums <- n.Miner.InputSums    // figure out how to get inpupt sums
 	//n.Miner.TxPool.Add(tx, sums) // update tx pool
-	n.Miner.HandleTransaction(tx)
 
 	for _, peer := range n.PeerDb.List() {
 		peer.Addr.ForwardTransactionRPC(block.EncodeTransaction(tx))
