@@ -14,6 +14,7 @@ import (
 // with the highest priority to add to the mining pool.
 func (m *Miner) Mine() *block.Block {
 	//TODO
+	utils.SetDebug(true)
 	if !m.TxPool.PriorityMet() { // return if not worth mining a block
 		return nil
 	}
