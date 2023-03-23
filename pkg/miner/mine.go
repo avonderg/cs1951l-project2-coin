@@ -25,9 +25,9 @@ func (m *Miner) Mine() *block.Block {
 	// pass in cbTx into append
 	txs := []*block.Transaction{cbTx}
 	// need to add the other transactions in the miner pool
-	for _, tx := range m.MiningPool {
-		txs = append(txs, tx)
-	}
+	//for _, tx := range m.MiningPool {
+	//	txs = append(txs, tx)
+	//}
 
 	// create new block
 	b := block.New(m.PreviousHash, txs, string(m.DifficultyTarget))
