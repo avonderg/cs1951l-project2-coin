@@ -198,19 +198,17 @@ func (w *Wallet) updateCoin() {
 	// otherwise if they haven't reached it then increment the # of confirmations
 
 	for coin, _ := range w.UnconfirmedSpentCoins {
+		w.UnconfirmedSpentCoins[coin] += 1
 		if (w.UnconfirmedSpentCoins[coin]) >= w.Config.SafeBlockAmount { // safe block amount????
 			delete(w.UnconfirmedSpentCoins, coin)
-		} else {
-			w.UnconfirmedSpentCoins[coin] += 1
 		}
 	}
 	for coin, _ := range w.UnconfirmedReceivedCoins {
+		w.UnconfirmedReceivedCoins[coin] += 1
 		if (w.UnconfirmedReceivedCoins[coin]) >= w.Config.SafeBlockAmount {
 			w.Balance += coin.TransactionOutput.Amount // add it to balance
 			w.CoinCollection[coin.TransactionOutput] = coin
 			delete(w.UnconfirmedReceivedCoins, coin)
-		} else {
-			w.UnconfirmedReceivedCoins[coin] += 1
 		}
 	}
 }
