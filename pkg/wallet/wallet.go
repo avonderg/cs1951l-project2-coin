@@ -155,24 +155,14 @@ func (w *Wallet) HandleBlock(txs []*block.Transaction) {
 // step (1): sees if any of the inputs are ones that we've spent
 func (w *Wallet) checkInputs(tx *block.Transaction) {
 	//TODO
-	//for _, input := range inps {
-	//	hash := input.ReferenceTransactionHash
-	//	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
-	//		coinInfo := w.UnseenSpentCoins[hash]
-	//
-	//		delete(w.UnseenSpentCoins, hash)
-	//		for _, coin := range coinInfo {
-	//			w.UnconfirmedSpentCoins[coin] = 1
-	//		}
-	//	}
-	//}
 	hash := tx.Hash()
 	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
 		coinInfo := w.UnseenSpentCoins[hash]
 
 		delete(w.UnseenSpentCoins, hash)
+
 		for _, coin := range coinInfo {
-			w.UnconfirmedSpentCoins[coin] = 1
+			w.UnconfirmedSpentCoins[coin] = 0
 		}
 	}
 }

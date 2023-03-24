@@ -19,14 +19,6 @@ func (m *Miner) Mine() *block.Block {
 	m.Mining.Store(true) // set mining to true
 	//m.MiningPool = m.NewMiningPool() // create new pool
 	pool := m.NewMiningPool() // create new pool
-	// create new coinbase tx
-	//cbTx := m.GenerateCoinbaseTransaction(pool)
-	//txs := []*block.Transaction{cbTx}
-	//txs := append([]*block.Transaction{m.GenerateCoinbaseTransaction(pool)}, pool...)
-	//for _, tx := range m.MiningPool {
-	//	txs = append(txs, tx)
-	//}
-	// create new block
 	b := block.New(m.PreviousHash, pool, string(m.DifficultyTarget))
 	//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
