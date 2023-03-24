@@ -86,13 +86,14 @@ func (w *Wallet) generateTransactionInputs(amount uint32, fee uint32) (uint32, [
 	sum := uint32(0)
 
 	for out, coin := range w.CoinCollection {
-		sum += coin.TransactionOutput.Amount
+		//sum += coin.TransactionOutput.Amount
+		sum += out.Amount
 		signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
 		inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
 		inputs = append(inputs, inp)
 		// enough to satisfy amount + fee? it exceeds by a little and what you exceed it by is what you are returning
 		coins = append(coins, coin)
-		delete(w.CoinCollection, out) // do you remove it from the coin collection??????
+		//delete(w.CoinCollection, out) // do you remove it from the coin collection??????
 	}
 	change := sum - (amount + fee)
 
@@ -127,7 +128,7 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 
 	for _, coin := range coins {
 		w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
-		//delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
+		delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
 	}
 	//w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
 	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
