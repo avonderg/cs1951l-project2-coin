@@ -125,10 +125,14 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 	change, inputs, coins := w.generateTransactionInputs(amount, fee)
 	outputs := w.generateTransactionOutputs(amount, recipientPK, change)
 
-	w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
+	for _, coin := range coins {
+		w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
+		delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
+	}
+	//w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
 	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
 
-	w.Balance = change + fee
+	w.Balance -= change + fee + amount
 	return transac
 }
 
@@ -170,7 +174,7 @@ func (w *Wallet) checkInputs(tx *block.Transaction) {
 		delete(w.UnseenSpentCoins, hash)
 
 		for _, coin := range coinInfo {
-			w.UnconfirmedSpentCoins[coin] = 0
+			w.UnconfirmedSpentCoins[coin] = 1
 		}
 	}
 }
@@ -199,7 +203,7 @@ func (w *Wallet) updateCoin() {
 		w.UnconfirmedSpentCoins[coin] += 1
 		if (w.UnconfirmedSpentCoins[coin]) >= w.Config.SafeBlockAmount { // safe block amount????
 			delete(w.UnconfirmedSpentCoins, coin)
-			delete(w.CoinCollection, coin.TransactionOutput)
+			//delete(w.CoinCollection, coin.TransactionOutput)
 		}
 	}
 	for coin, _ := range w.UnconfirmedReceivedCoins {
