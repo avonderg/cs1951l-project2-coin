@@ -175,7 +175,7 @@ func (w *Wallet) checkInputs(tx *block.Transaction) {
 		delete(w.UnseenSpentCoins, hash)
 
 		for _, coin := range coinInfo {
-			w.UnconfirmedSpentCoins[coin] = 1
+			w.UnconfirmedSpentCoins[coin] = 0
 		}
 	}
 }
@@ -188,7 +188,7 @@ func (w *Wallet) checkOutputs(outs []*block.TransactionOutput, tx *block.Transac
 			coin := &CoinInfo{tx.Hash(), uint32(i), out}
 
 			// check if coin is ours
-			w.UnconfirmedReceivedCoins[coin] = 1
+			w.UnconfirmedReceivedCoins[coin] = 0
 		}
 	}
 }
