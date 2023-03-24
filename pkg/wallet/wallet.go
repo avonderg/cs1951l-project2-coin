@@ -127,7 +127,7 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 
 	for _, coin := range coins {
 		w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
-		delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
+		//delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
 	}
 	//w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
 	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
