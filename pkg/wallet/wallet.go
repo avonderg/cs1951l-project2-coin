@@ -204,7 +204,7 @@ func (w *Wallet) updateCoin() {
 		w.UnconfirmedSpentCoins[coin] += 1
 		if (w.UnconfirmedSpentCoins[coin]) >= w.Config.SafeBlockAmount { // safe block amount????
 			delete(w.UnconfirmedSpentCoins, coin)
-			//delete(w.CoinCollection, coin.TransactionOutput)
+			delete(w.CoinCollection, coin.TransactionOutput)
 		}
 	}
 	for coin, _ := range w.UnconfirmedReceivedCoins {
