@@ -162,7 +162,7 @@ func (w *Wallet) checkInputs(tx *block.Transaction) {
 		delete(w.UnseenSpentCoins, hash)
 
 		for _, coin := range coinInfo {
-			w.UnconfirmedSpentCoins[coin] = 0
+			w.UnconfirmedSpentCoins[coin] = 1
 		}
 	}
 }
