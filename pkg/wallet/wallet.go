@@ -174,14 +174,26 @@ func (w *Wallet) checkInputs(tx *block.Transaction) {
 	//		}
 	//	}
 	//}
-	hash := tx.Hash()
-	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
-		coinInfo := w.UnseenSpentCoins[hash]
+	//hash := tx.Hash()
+	//if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
+	//	coinInfo := w.UnseenSpentCoins[hash]
+	//
+	//	delete(w.UnseenSpentCoins, hash)
+	//
+	//	for _, coin := range coinInfo {
+	//		w.UnconfirmedSpentCoins[coin] = 0
+	//	}
+	//}
+	inps := tx.Inputs
+	for _, input := range inps {
+		if _, ok := w.UnseenSpentCoins[input.ReferenceTransactionHash]; ok { // if spent
+			coinInfo := w.UnseenSpentCoins[input.ReferenceTransactionHash]
 
-		delete(w.UnseenSpentCoins, hash)
+			delete(w.UnseenSpentCoins, input.ReferenceTransactionHash)
 
-		for _, coin := range coinInfo {
-			w.UnconfirmedSpentCoins[coin] = 0
+			for _, coin := range coinInfo {
+				w.UnconfirmedSpentCoins[coin] = 0
+			}
 		}
 	}
 }
