@@ -85,9 +85,9 @@ func (w *Wallet) generateTransactionInputs(amount uint32, fee uint32) (uint32, [
 	// change : (how much you spent) - (amount + fee)
 	sum := uint32(0)
 	for sum < amount+fee {
-		for out, coin := range w.CoinCollection {
-			//sum += coin.TransactionOutput.Amount
-			sum += out.Amount
+		for _, coin := range w.CoinCollection {
+			sum += coin.TransactionOutput.Amount
+			//sum += out.Amount
 			signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
 			inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
 			inputs = append(inputs, inp)
@@ -116,8 +116,10 @@ func (w *Wallet) generateTransactionOutputs(
 	var outputs []*block.TransactionOutput
 	output_receiver := &block.TransactionOutput{amount, string(receiverPK)}
 	outputs = append(outputs, output_receiver)
-	output_change := &block.TransactionOutput{change, w.Id.GetPublicKeyString()}
-	outputs = append(outputs, output_change)
+	if change > 0 {
+		output_change := &block.TransactionOutput{change, w.Id.GetPublicKeyString()}
+		outputs = append(outputs, output_change)
+	}
 	return outputs
 }
 
