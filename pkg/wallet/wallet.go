@@ -163,27 +163,34 @@ func (w *Wallet) HandleBlock(txs []*block.Transaction) {
 // step (1): sees if any of the inputs are ones that we've spent
 func (w *Wallet) checkInputs(tx *block.Transaction) {
 	//TODO
-	//for _, input := range inps {
-	//	hash := input.ReferenceTransactionHash
-	//	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
-	//		coinInfo := w.UnseenSpentCoins[hash]
-	//
-	//		delete(w.UnseenSpentCoins, hash)
-	//		for _, coin := range coinInfo {
-	//			w.UnconfirmedSpentCoins[coin] = 1
-	//		}
-	//	}
-	//}
-	hash := tx.Hash()
-	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
-		coinInfo := w.UnseenSpentCoins[hash]
+	inps := tx.Inputs
+	for _, input := range inps {
+		hash := input.ReferenceTransactionHash
 
-		delete(w.UnseenSpentCoins, hash)
+		if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
+			coinInfo := w.UnseenSpentCoins[hash]
 
-		for _, coin := range coinInfo {
-			w.UnconfirmedSpentCoins[coin] = 0
+			//delete(w.UnseenSpentCoins, hash)
+			for i, coin := range coinInfo {
+				w.UnconfirmedSpentCoins[coin] = 0
+				w.UnseenSpentCoins[hash] = append(coinInfo[:i], coinInfo[i+1:]...)
+				if len(w.UnseenSpentCoins[hash]) == 0 {
+					delete(w.UnseenSpentCoins, hash)
+				}
+			}
 		}
 	}
+	//hash := tx.Hash()
+	//if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
+	//	coinInfo := w.UnseenSpentCoins[hash]
+	//
+	//	delete(w.UnseenSpentCoins, hash)
+	//
+	//	for _, coin := range coinInfo {
+	//		w.UnconfirmedSpentCoins[coin] = 0
+	//	}
+	//}
+
 }
 
 // step (2): sees if any of the incoming outputs on the block are ours
