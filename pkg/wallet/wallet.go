@@ -178,14 +178,10 @@ func (w *Wallet) checkInputs(tx *block.Transaction) {
 	if _, ok := w.UnseenSpentCoins[hash]; ok { // if spent
 		coinInfo := w.UnseenSpentCoins[hash]
 
-		//delete(w.UnseenSpentCoins, hash)
+		delete(w.UnseenSpentCoins, hash)
 
-		for i, coin := range coinInfo {
+		for _, coin := range coinInfo {
 			w.UnconfirmedSpentCoins[coin] = 0
-			w.UnseenSpentCoins[hash] = append(coinInfo[:i], coinInfo[i+1:]...)
-			if len(w.UnseenSpentCoins[hash]) == 0 {
-				delete(w.UnseenSpentCoins, hash)
-			}
 		}
 	}
 }
@@ -198,7 +194,10 @@ func (w *Wallet) checkOutputs(outs []*block.TransactionOutput, tx *block.Transac
 			coin := &CoinInfo{tx.Hash(), uint32(i), out}
 
 			// check if coin is ours
-			w.UnconfirmedReceivedCoins[coin] = 0
+			if _, ok := w.UnconfirmedReceivedCoins[coin]; !ok {
+				w.UnconfirmedReceivedCoins[coin] = 0
+			}
+			//w.UnconfirmedReceivedCoins[coin] = 0
 		}
 	}
 }
