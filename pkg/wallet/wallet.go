@@ -125,7 +125,7 @@ func (w *Wallet) generateTransactionOutputs(
 // which will propagate the transaction along the P2P network.
 func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byte) *block.Transaction {
 	//TODO
-	if !(w.Balance >= amount+fee) {
+	if !(w.Balance > amount+fee) {
 		return nil
 	}
 	//pk := w.Id.GetPublicKeyString()
@@ -133,8 +133,8 @@ func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byt
 	outputs := w.generateTransactionOutputs(amount, recipientPK, change)
 
 	for _, coin := range coins {
-		w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
 		delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
+		w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
 	}
 	//w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
 	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
