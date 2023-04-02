@@ -84,20 +84,26 @@ func (w *Wallet) generateTransactionInputs(amount uint32, fee uint32) (uint32, [
 	var coins []*CoinInfo
 	// change : (how much you spent) - (amount + fee)
 	sum := uint32(0)
-
-	for out, coin := range w.CoinCollection {
-		//sum += coin.TransactionOutput.Amount
-		sum += out.Amount
-		signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
-		inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
-		inputs = append(inputs, inp)
-		// enough to satisfy amount + fee? it exceeds by a little and what you exceed it by is what you are returning
-		coins = append(coins, coin)
-		//delete(w.CoinCollection, out) // do you remove it from the coin collection??????
+	for sum < amount+fee {
+		for out, coin := range w.CoinCollection {
+			//sum += coin.TransactionOutput.Amount
+			sum += out.Amount
+			signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
+			inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
+			inputs = append(inputs, inp)
+			// enough to satisfy amount + fee? it exceeds by a little and what you exceed it by is what you are returning
+			coins = append(coins, coin)
+			//delete(w.CoinCollection, out) // do you remove it from the coin collection??????
+		}
+		if sum >= amount+fee {
+			change := sum - (amount + fee)
+			return change, inputs, coins
+		}
+		//change := sum - (amount + fee)
+		//
+		//return change, inputs, coins
 	}
-	change := sum - (amount + fee)
-
-	return change, inputs, coins
+	return 0, nil, nil
 }
 
 // generateTransactionOutputs generates the transaction outputs required to create a transaction.
