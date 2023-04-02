@@ -116,7 +116,7 @@ func (w *Wallet) generateTransactionOutputs(
 	var outputs []*block.TransactionOutput
 	output_receiver := &block.TransactionOutput{amount, string(receiverPK)}
 	outputs = append(outputs, output_receiver)
-	output_change := &block.TransactionOutput{change, string(w.Id.GetPublicKeyBytes())}
+	output_change := &block.TransactionOutput{change, w.Id.GetPublicKeyString()}
 	outputs = append(outputs, output_change)
 	return outputs
 }

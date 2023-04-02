@@ -110,9 +110,12 @@ func (n *Node) BroadcastTransaction(tx *block.Transaction) {
 	//sums := uint32(0)
 	//sums <- n.Miner.InputSums    // figure out how to get inpupt sums
 	//n.Miner.TxPool.Add(tx, sums) // update tx pool
-
+	encodedTx := block.EncodeTransaction(tx)
 	for _, peer := range n.PeerDb.List() {
-		peer.Addr.ForwardTransactionRPC(block.EncodeTransaction(tx))
+		//peer.Addr.ForwardTransactionRPC(block.EncodeTransaction(tx))
+		go func(a *address.Address) {
+			peer.Addr.ForwardTransactionRPC(encodedTx)
+		}(peer.Addr)
 	}
 }
 
@@ -180,8 +183,12 @@ func (n *Node) HandleMinerBlock(b *block.Block) {
 
 	n.Wallet.HandleBlock(b.Transactions) // wallet update its mappings
 
+	encodedB := block.EncodeBlock(b)
 	for _, peer := range n.PeerDb.List() {
-		peer.Addr.ForwardBlockRPC(block.EncodeBlock(b))
+		//peer.Addr.ForwardBlockRPC(block.EncodeBlock(b))
+		go func(a *address.Address) {
+			peer.Addr.ForwardBlockRPC(encodedB)
+		}(peer.Addr)
 	}
 }
 
