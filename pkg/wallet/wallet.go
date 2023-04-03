@@ -80,6 +80,30 @@ func New(config *Config, id id.ID) *Wallet {
 // return to themselves, and the coinInfos used
 func (w *Wallet) generateTransactionInputs(amount uint32, fee uint32) (uint32, []*block.TransactionInput, []*CoinInfo) {
 	//TODO: optional, but we recommend using a helper like this
+	//var inputs []*block.TransactionInput
+	//var coins []*CoinInfo
+	//// change : (how much you spent) - (amount + fee)
+	//sum := uint32(0)
+	//for sum < amount+fee {
+	//	for _, coin := range w.CoinCollection {
+	//		sum += coin.TransactionOutput.Amount
+	//		//sum += out.Amount
+	//		signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
+	//		inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
+	//		inputs = append(inputs, inp)
+	//		// enough to satisfy amount + fee? it exceeds by a little and what you exceed it by is what you are returning
+	//		coins = append(coins, coin)
+	//		//delete(w.CoinCollection, out) // do you remove it from the coin collection??????
+	//	}
+	//	if sum >= amount+fee {
+	//		change := sum - (amount + fee)
+	//		return change, inputs, coins
+	//	}
+	//	//change := sum - (amount + fee)
+	//	//
+	//	//return change, inputs, coins
+	//}
+	//return 0, nil, nil
 	var inputs []*block.TransactionInput
 	var coins []*CoinInfo
 	// change : (how much you spent) - (amount + fee)
@@ -87,21 +111,18 @@ func (w *Wallet) generateTransactionInputs(amount uint32, fee uint32) (uint32, [
 	for sum < amount+fee {
 		for _, coin := range w.CoinCollection {
 			sum += coin.TransactionOutput.Amount
-			//sum += out.Amount
 			signature, _ := coin.TransactionOutput.MakeSignature(w.Id)
 			inp := &block.TransactionInput{coin.ReferenceTransactionHash, coin.OutputIndex, signature}
 			inputs = append(inputs, inp)
-			// enough to satisfy amount + fee? it exceeds by a little and what you exceed it by is what you are returning
 			coins = append(coins, coin)
-			//delete(w.CoinCollection, out) // do you remove it from the coin collection??????
+			if sum >= amount+fee {
+				break
+			}
 		}
-		if sum >= amount+fee {
-			change := sum - (amount + fee)
-			return change, inputs, coins
-		}
-		//change := sum - (amount + fee)
-		//
-		//return change, inputs, coins
+	}
+	if sum >= amount+fee {
+		change := sum - (amount + fee)
+		return change, inputs, coins
 	}
 	return 0, nil, nil
 }
@@ -127,19 +148,33 @@ func (w *Wallet) generateTransactionOutputs(
 // which will propagate the transaction along the P2P network.
 func (w *Wallet) RequestTransaction(amount uint32, fee uint32, recipientPK []byte) *block.Transaction {
 	//TODO
+	//if !(w.Balance > amount+fee) {
+	//	return nil
+	//}
+	////pk := w.Id.GetPublicKeyString()
+	//change, inputs, coins := w.generateTransactionInputs(amount, fee)
+	//outputs := w.generateTransactionOutputs(amount, recipientPK, change)
+	//
+	//for _, coin := range coins {
+	//	delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
+	//	w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
+	//}
+	////w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
+	//transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
+	//
+	//w.Balance -= change + fee + amount
+	//return transac
 	if !(w.Balance > amount+fee) {
 		return nil
 	}
-	//pk := w.Id.GetPublicKeyString()
 	change, inputs, coins := w.generateTransactionInputs(amount, fee)
 	outputs := w.generateTransactionOutputs(amount, recipientPK, change)
 
 	for _, coin := range coins {
-		delete(w.CoinCollection, coin.TransactionOutput) // delete from coin collection
+		delete(w.CoinCollection, coin.TransactionOutput)
 		w.UnseenSpentCoins[coin.ReferenceTransactionHash] = append(w.UnseenSpentCoins[coin.ReferenceTransactionHash], coin)
 	}
-	//w.UnseenSpentCoins[coins[0].ReferenceTransactionHash] = coins
-	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0} // unsure ab locktime and version
+	transac := &block.Transaction{Version: 0, Inputs: inputs, Outputs: outputs, LockTime: 0}
 
 	w.Balance -= change + fee + amount
 	return transac
